@@ -3,6 +3,42 @@
 
 #read AHS data
 dat.n<-read.csv("~/Desktop/ahs2013n.csv")
+
+#test cleaning the data
+dat.nt<-dat.n[1:100, ]
+class(dat.nt$HHSEX)
+typeof(dat.nt$HHSEX)
+attributes(dat.nt$HHSEX)
+head(dat.nt$HHSEX)
+
+#Y var
+class(dat.nt$PTPUBTRN)
+typeof(dat.nt$PTPUBTURN)
+attributes(dat.nt$PTPUBTRN)
+head(dat.nt$PTPUBTRN)
+summary(dat.nt$PTPUBTRN)
+as.character(dat.nt$PTPUBTRN)
+as.numeric(dat.nt$PTPUBTRN)
+
+#sex
+dat.nt$HHSEX <- factor(dat.nt$HHSEX, labels = c("NA", "1", "2"))
+as.numeric(as.character(dat.nt$HHSEX))
+summary(dat.nt$HHSEX)
+
+#age
+class(dat.nt$HHAGE)
+typeof(dat.nt$HHAGE)
+library(dplyr)
+na_if(dat.nt$HHAGE, -6)
+dat.nt[dat.nt$HHAGE<=0]<-NA
+summary(dat.nt$HHAGE)
+
+for (i in length(dat.nt$HHSEX)) {
+  if (dat.nt$HHSEX[i]==-6) {
+    dat.nt[-c(i),]
+  }
+}
+
 dat.m<-read.csv("~/Desktop/ahs2013m.csv")
 
 #preliminary plots
@@ -10,7 +46,7 @@ library(ggplot2)
 library(gridExtra)
 
 #sex
-ggdat<-data.frame(Sex=dat.n$HHSEX)
+ggdat<-data.frame(Sex=dat.nt$HHSEX)
 ggplot(data=ggdat,aes(x=Sex,fill=Sex))+
   geom_bar()+
   theme_bw()+
@@ -20,8 +56,7 @@ ggplot(data=ggdat,aes(x=Sex,fill=Sex))+
   ggtitle("National Sex Demographic")
   
 #age
-subset(dat.n$HHAGE, dat.n$HHAGE >= 0)
-ggdat<-data.frame(Age=dat.n$HHAGE)
+ggdat<-data.frame(Age=dat.nt$HHAGE)
 ggplot(data=ggdat,aes(x=Age))+
   geom_histogram(color="black", fill="purple")+
   theme_bw()+
@@ -115,3 +150,26 @@ ggplot(data=ggdat,aes(x=Frequency, fill=Frequency))+
   xlab("Indicator of Frequency Public Transportation Use")+
   ylab("Count")+
   ggtitle("National Indicator of Frequency of Public Transportation Use")
+
+
+#LASSO - load the library
+library(glmnet)
+library(tidyverse)
+library(caret)
+#remove NAs
+dat.n2<- na.omit(dat.n)
+#inspect the data
+sample_n(dat.n2, 3)
+
+#split the data into training and test set
+set.seed(69)
+training.sample <- dat.n$PTPUBTRN %>%
+  createDataPartition(p = 0.8, list=FALSE)
+train.data <- dat.n2[training.sample, ]
+test.data <-dat.n2[-training.sample, ]
+
+#dummy code categorical predictor variables
+x <- model.matrix(PTPUBTRN~., train.data)[,-1]
+y <- ifelse(train.data$PTPUBTRN == "pos", 1, 0)
+
+glmnet(x, y, family = "binomial", alpha = 1, lambda = NULL)
