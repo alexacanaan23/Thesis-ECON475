@@ -1,5 +1,5 @@
 #Alexa Canaan
-#Metrics/Thesis Code
+#Metrics/Thesis DRAFT
 
 #read AHS data
 dat.n<-read.csv("~/Desktop/ahs2013n.csv")
@@ -13,17 +13,17 @@ attributes(dat.nt$HHSEX)
 head(dat.nt$HHSEX)
 
 #Y var
-class(dat.nt$PTPUBTRN)
-typeof(dat.nt$PTPUBTURN)
-attributes(dat.nt$PTPUBTRN)
-head(dat.nt$PTPUBTRN)
+class(dat.n$PTPUBTRN)
+typeof(dat.n$PTPUBTURN)
+attributes(dat.n$PTPUBTRN)
+head(dat.n$PTPUBTRN)
 summary(dat.n$PTPUBTRN)
 as.character(dat.n$PTPUBTRN)
 as.numeric(dat.n$PTPUBTRN)
 
 dat.n$PTPUBTRN <- factor(dat.n$PTPUBTRN, labels = c("NA", "NA", "NA", "1", "2"))
+
 dat.n.omit<-na.omit(dat.n)
-as.numeric(dat.n.omit$PTPUBTRN)
 
 #small model
 mod1<-lm(formula= as.numeric(PTPUBTRN) ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISPUB + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.n.omit)
