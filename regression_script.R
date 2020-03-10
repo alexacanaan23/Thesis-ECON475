@@ -146,7 +146,7 @@ head(dat.n$WNTRAN)
 summary(dat.n$WNTRAN)
 #as.character(dat.n$WNTRAN)
 #as.numeric(dat.n$WNTRAN)
-dat.n$WNTRAN <- factor(dat.n$WNTRAN, labels = c(NA, NA, NA, NA, "1", "2"))
+dat.n$WNTRAN <- factor(dat.n$WNTRAN, labels = c(NA, NA, NA, NA, "1", "0"))
 
 #wnamen
 class(dat.n$WNAMEN)
@@ -156,7 +156,7 @@ head(dat.n$WNAMEN)
 summary(dat.n$WNAMEN)
 #as.character(dat.n$WNTRAN)
 #as.numeric(dat.n$WNTRAN)
-dat.n$WNAMEN <- factor(dat.n$WNAMEN, labels = c(NA, NA, NA, NA, "1", "2"))
+dat.n$WNAMEN <- factor(dat.n$WNAMEN, labels = c(NA, NA, NA, NA, "1", "0"))
 
 #wnjob
 class(dat.n$WNJOB)
@@ -166,7 +166,7 @@ head(dat.n$WNJOB)
 summary(dat.n$WNJOB)
 #as.character(dat.n$WNTRAN)
 #as.numeric(dat.n$WNTRAN)
-dat.n$WNJOB <- factor(dat.n$WNJOB, labels = c(NA, NA, NA, NA, "1", "2"))
+dat.n$WNJOB <- factor(dat.n$WNJOB, labels = c(NA, NA, NA, NA, "1", "0"))
 
 dat.nt.omit<-na.omit(dat.nt)
 dat.n.omit<-na.omit(dat.n)
@@ -186,7 +186,7 @@ summary(mod3)
 #BASE model
 #logit 
 
-dat.logit<-data.frame(dat.n$PTPUBTRN, dat.n$METRO3, dat.n$CARS, dat.n$TRUCKS, dat.n$ZINC2, dat.n$PTDISBUS, dat.n$PTDISPUB, dat.n$PTDISRAIL, dat.n$PTDISSHUT, dat.n$PTDISSUB, dat.n$DRUGSTORE, dat.n$GROCERY, dat.n$WNAMEN, dat.n$WNJOB, dat.n$WNTRAN)
+dat.logit<-data.frame(dat.n$PTPUBTRN, dat.n$METRO3, dat.n$CARS, dat.n$TRUCKS, dat.n$ZINC2, dat.n$PTDISBUS, dat.n$PTDISPUB, dat.n$PTDISRAIL, dat.n$PTDISSHUT, dat.n$PTDISSUB, dat.n$WNAMEN, dat.n$WNJOB, dat.n$WNTRAN)
 # for (i in names(dat.n.omit)) {
 #   if (is.factor(dat.n.omit[[i]]==TRUE)){
 #     if (nlevels(dat.n.omit[[i]]) < 2) {
@@ -203,6 +203,178 @@ summary(mod2)
 #logit
 mod4<-glm(formula= PTPUBTRN ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISPUB + PTDISRAIL + PTDISSHUT + PTDISSUB + WNAMEN + WNJOB + WNTRAN, data = dat.n, family = "binomial"(link = "logit"))
 summary(mod4)
+
+#produce regression output
+#install.packages("stargazer")
+library(stargazer)
+stargazer(mod1, mod3, mod2, mod4, type = "text",
+          dep.var.labels = c("Public Transport Use", "Public Transport Use"),
+          out = "regmodels.txt")
+stargazer(mod1, mod3, mod2, mod4, type = "html",
+          dep.var.labels = c("Public Transport Use", "Public Transport Use"),
+          out = "regmodels.htm")
+
+#install.packages("moderndive")
+library(moderndive)
+get_regression_table(mod1, digits = 2)
+
+#visuals
+#household uses public transportation
+ggdat<-data.frame(Use=dat.n$PTPUBTRN)
+ggdat<-na.omit(ggdat)
+ggdat$Use<-factor(ggdat$Use, levels = c(1,0), labels = c("Yes","No"))
+ggplot(data=ggdat,aes(x=Use, fill=Use))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Indicator of Public Transportation Use")+
+  ylab("Count")+
+  ggtitle("National Indicator of Public Transportation Use")
+
+#metro
+#MSA - metropolitan statistical area
+ggdat<-data.frame(Metro=dat.n$METRO3)
+ggdat<-na.omit(ggdat)
+ggdat$Metro<-factor(ggdat$Metro, levels = c(1,2,3,4,5), labels = c("Central City", "In MSA - Urban", "In MSA - Rural", "Outside MSA - Urban", "Outside MSA - Rural"))
+ggplot(data=ggdat,aes(x=Metro, fill=Metro))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance to Metro Area")+
+  ylab("Count")+
+  ggtitle("Metro Status")
+
+#cars
+ggdat<-data.frame(Cars=dat.n$CARS)
+ggdat<-na.omit(ggdat)
+ggdat$Cars<-factor(ggdat$Cars, levels = c(0,1,2,3,4,5), labels = c(0,1,2,3,4,"5+"))
+ggplot(data=ggdat,aes(x=Cars, fill=Cars))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Number of Cars")+
+  ylab("Count")+
+  ggtitle("Number of Cars per Household")
+
+#trucks
+ggdat<-data.frame(Trucks=dat.n$TRUCKS)
+ggdat<-na.omit(ggdat)
+ggdat$Trucks<-factor(ggdat$Trucks, levels = c(0,1,2,3,4,5), labels = c(0,1,2,3,4,"5+"))
+ggplot(data=ggdat,aes(x=Trucks, fill=Trucks))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Number of Trucks")+
+  ylab("Count")+
+  ggtitle("Number of Trucks per Household")
+
+#household income
+ggdat<-data.frame(Income=dat.n$ZINC2)
+ggdat<-na.omit(ggdat)
+ggplot(data=ggdat,aes(x=Income))+
+  geom_histogram(color="black", fill="blue")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Household Income")+
+  ylab("Count")+
+  ggtitle("National Household Income Demographic")+
+  theme(legend.title = element_blank())
+
+#general distance
+ggdat<-data.frame(Distance=dat.n$PTDISPUB)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Public Transportation")+
+  ylab("Count")+
+  ggtitle("General Distance from Public Transportation")
+
+#bus distance 
+ggdat<-data.frame(Distance=dat.n$PTDISBUS)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Bus Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Bus Stop")
+
+#rail distance 
+ggdat<-data.frame(Distance=dat.n$PTDISRAIL)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Rail Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Rail Stop")
+
+#shuttle distance 
+ggdat<-data.frame(Distance=dat.n$PTDISSHUT)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Shuttle Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Shuttle Stop")
+
+#subway distance 
+ggdat<-data.frame(Distance=dat.n$PTDISSUB)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Subway Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Subway Stop")
+
+#wnamen
+ggdat<-data.frame(Amenities=dat.n$WNAMEN)
+ggdat<-na.omit(ggdat)
+ggdat$Amenities<-factor(ggdat$Amenities, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Amenities, fill=Amenities))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Amenities")+
+  ylab("Count")+
+  ggtitle("Moved to be Closer to Amenities")
+
+#wnjob
+ggdat<-data.frame(Work=dat.n$WNJOB)
+ggdat<-na.omit(ggdat)
+ggdat$Work<-factor(ggdat$Work, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Work, fill=Work))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Work")+
+  ylab("Count")+
+  ggtitle("Moved to be Closer to Work")
+
+#wntrain
+ggdat<-data.frame(Transport=dat.n$WNTRAN)
+ggdat<-na.omit(ggdat)
+ggdat$Transport<-factor(ggdat$Transport, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Transport, fill=Transport))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Transportation")+
+  ylab("Count")+
+  ggtitle("Moved to be Closer to Transportation")
 
 #LASSO - load the library
 library(glmnet)
@@ -255,3 +427,9 @@ observed.classes <- test.data$diabetes
 mean(predicted.classes == observed.classes)
 
 #RIDGE REGRESSION
+library(tidyverse)
+library(broom)
+library(glmnet)
+#install.packages("ridge")
+library(ridge)
+
