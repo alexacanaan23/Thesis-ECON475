@@ -108,36 +108,6 @@ summary(dat.n$PTDISSUB)
 dat.n$PTDISSUB <- factor(dat.n$PTDISSUB, labels = c(NA, NA, NA, "1", "2", "3", "4"))
 
 #DATA CLEANING - MODEL LEVEL 2
-#grocery
-class(dat.n$GROCERY)
-typeof(dat.n$GROCERY)
-attributes(dat.n$GROCERY)
-head(dat.n$GROCERY)
-summary(dat.n$GROCERY)
-#as.character(dat.n$GROCERY)
-#as.numeric(dat.n$GROCERY)
-dat.n$GROCERY <- factor(dat.n$GROCERY, labels = c(NA, NA, NA, "1", "2", "3"))
-
-#drugstore
-class(dat.n$DRUGSTORE)
-typeof(dat.n$DRUGSTORE)
-attributes(dat.n$DRUGSTORE)
-head(dat.n$DRUGSTORE)
-summary(dat.n$DRUGSTORE)
-#as.character(dat.n$GROCERY)
-#as.numeric(dat.n$GROCERY)
-dat.n$DRUGSTORE <- factor(dat.n$DRUGSTORE, labels = c(NA, NA, NA, "1", "0"))
-
-#wmclos - OPTIONAL?
-class(dat.n$WMCLOS)
-typeof(dat.n$WMCLOS)
-attributes(dat.n$WMCLOS)
-head(dat.n$WMCLOS)
-summary(dat.n$WMCLOS)
-#as.character(dat.n$WMCLOS)
-#as.numeric(dat.n$WMCLOS)
-dat.n$WMCLOS <- factor(dat.n$WMCLOS, labels = c(NA, NA, NA, NA, "1", "2"))
-
 #wntran
 class(dat.n$WNTRAN)
 typeof(dat.n$WNTRAN)
@@ -168,6 +138,7 @@ summary(dat.n$WNJOB)
 #as.numeric(dat.n$WNTRAN)
 dat.n$WNJOB <- factor(dat.n$WNJOB, labels = c(NA, NA, NA, NA, "1", "0"))
 
+#remove NA's
 dat.nt.omit<-na.omit(dat.nt)
 dat.n.omit<-na.omit(dat.n)
 
@@ -185,17 +156,8 @@ summary(mod3)
 
 #BASE model
 #logit 
-
-dat.logit<-data.frame(dat.n$PTPUBTRN, dat.n$METRO3, dat.n$CARS, dat.n$TRUCKS, dat.n$ZINC2, dat.n$PTDISBUS, dat.n$PTDISPUB, dat.n$PTDISRAIL, dat.n$PTDISSHUT, dat.n$PTDISSUB, dat.n$WNAMEN, dat.n$WNJOB, dat.n$WNTRAN)
-# for (i in names(dat.n.omit)) {
-#   if (is.factor(dat.n.omit[[i]]==TRUE)){
-#     if (nlevels(dat.n.omit[[i]]) < 2) {
-#       dat.n.omit[[i]]<-NULL
-#     }
-#   }
-# }
+#dat.logit<-data.frame(dat.n$PTPUBTRN, dat.n$METRO3, dat.n$CARS, dat.n$TRUCKS, dat.n$ZINC2, dat.n$PTDISBUS, dat.n$PTDISPUB, dat.n$PTDISRAIL, dat.n$PTDISSHUT, dat.n$PTDISSUB, dat.n$WNAMEN, dat.n$WNJOB, dat.n$WNTRAN)
 dat.n$PTPUBTRN<-factor(dat.n$PTPUBTRN, labels = c(1, 0))
-# dat.n.omit$PTPUBTRN<-factor(dat.n.omit$PTPUBTRN, labels = c(1, 0))
 mod2<-glm(formula= PTPUBTRN ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISPUB + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.n, family = "binomial"(link = "logit"))
 summary(mod2)
 
@@ -213,10 +175,6 @@ stargazer(mod1, mod3, mod2, mod4, type = "text",
 stargazer(mod1, mod3, mod2, mod4, type = "html",
           dep.var.labels = c("Public Transport Use", "Public Transport Use"),
           out = "regmodels.htm")
-
-#install.packages("moderndive")
-library(moderndive)
-get_regression_table(mod1, digits = 2)
 
 #visuals
 #household uses public transportation
@@ -393,15 +351,16 @@ for (i in names(dat.n2)) {
 
 dat.n2<-na.omit(dat.n2)
 
-#inspect the data
-sample_n(dat.n2, 3)
+grid = 10^seq(10, -2, length = 100)
 
 #split the data into training and test set
 set.seed(69)
 training.sample <- dat.n2$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
 train.data <- dat.n2[training.sample, ]
+train.data <- na.omit(train.data)
 test.data <-dat.n2[-training.sample, ]
+test.data <- na.omit(test.data)
 
 #dummy code categorical predictor variables
 x <- model.matrix(PTPUBTRN~., train.data)[,-1]
@@ -425,6 +384,28 @@ predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
 # Model accuracy
 observed.classes <- test.data$diabetes
 mean(predicted.classes == observed.classes)
+
+
+for (i in names(dat.nt.omit)) {
+  if (nlevels(dat.nt.omit[[i]]) < 2 & is.factor(dat.nt.omit[[i]])==TRUE) {
+    dat.nt.omit[[i]]<-NULL
+  }
+}
+
+dat.nt.omit<-na.omit(dat.nt.omit)
+
+#inspect the data
+sample_n(dat.nt.omit, 3)
+
+#split the data into training and test set
+set.seed(69)
+training.sample <- dat.nt.omit$PTPUBTRN %>%
+  createDataPartition(p = 0.8, list=FALSE)
+train.data <- dat.nt.omit[training.sample, ]
+test.data <-dat.nt.omit[-training.sample, ]
+
+#dummy code categorical predictor variables
+x <- model.matrix(PTPUBTRN~., train.data)[,-1]
 
 #RIDGE REGRESSION
 library(tidyverse)
