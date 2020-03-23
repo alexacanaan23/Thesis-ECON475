@@ -349,7 +349,7 @@ for (i in names(dat.n2)) {
   }
 }
 
-dat.n2<-na.omit(dat.n2)
+#dat.n2<-na.omit(dat.n2)
 
 grid = 10^seq(10, -2, length = 100)
 
@@ -358,9 +358,9 @@ set.seed(69)
 training.sample <- dat.n2$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
 train.data <- dat.n2[training.sample, ]
-train.data <- na.omit(train.data)
+#train.data <- na.omit(train.data)
 test.data <-dat.n2[-training.sample, ]
-test.data <- na.omit(test.data)
+#test.data <- na.omit(test.data)
 
 #dummy code categorical predictor variables
 x <- model.matrix(PTPUBTRN~., train.data)[,-1]
@@ -385,32 +385,37 @@ predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
 observed.classes <- test.data$diabetes
 mean(predicted.classes == observed.classes)
 
-
-for (i in names(dat.nt.omit)) {
-  if (nlevels(dat.nt.omit[[i]]) < 2 & is.factor(dat.nt.omit[[i]])==TRUE) {
-    dat.nt.omit[[i]]<-NULL
-  }
-}
-
-dat.nt.omit<-na.omit(dat.nt.omit)
-
-#inspect the data
-sample_n(dat.nt.omit, 3)
-
-#split the data into training and test set
-set.seed(69)
-training.sample <- dat.nt.omit$PTPUBTRN %>%
-  createDataPartition(p = 0.8, list=FALSE)
-train.data <- dat.nt.omit[training.sample, ]
-test.data <-dat.nt.omit[-training.sample, ]
-
-#dummy code categorical predictor variables
-x <- model.matrix(PTPUBTRN~., train.data)[,-1]
-
 #RIDGE REGRESSION
+
 library(tidyverse)
 library(broom)
 library(glmnet)
 #install.packages("ridge")
 library(ridge)
+library(car)
+#predict with just linear regression
+lmMod<- lm(PTPUBTRN~., data = train.data)
+summary(lmMod)
+vif(lmMod)
 
+#predict on test data
+predictedlm<- predict(lmMod, test.data)
+#combine actual and predicted
+compare <- cbind(actual=test.data$PTPUBTRN, predictedlm)
+#calculate accuracy
+mean(apply(compare,1,min)/apply(compare,1,max))
+
+#ridge regression model
+linRidgeMod <- linearRidge(PTPUBTRN ~ ., data = test.data)
+#predict on test data
+predictedRidgeMod <- predict(linRidgeMod, test.data)
+#compare
+compare <- cbind(actual=test.data$PTPUBTRN, predictedRidgeMod)
+#calculate accuracy
+mean(apply(compare,1,min)/apply(compare,1,max))
+
+
+#RANDOM FOREST
+#install.packages("randomForest")
+library(randomForest)
+rf <- randomForest(PTPUBTRN ~., data=train.data)
