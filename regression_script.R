@@ -161,7 +161,7 @@ dat.nt.omit<-na.omit(dat.nt)
 dat.n.omit<-na.omit(dat.n)
 
 #SUMMARY STATISTICS FOR POPULATION
-install.packages("skimr")
+#install.packages("skimr")
 library(skimr)
 library(dplyr)
 sum_stats_y<-filter(dat.n, PTPUBTRN==1)
@@ -211,6 +211,7 @@ stargazer(mod1, mod3, mod2, mod4, type = "html",
 
 #visuals
 #household uses public transportation
+library(ggpplot2)
 ggdat<-data.frame(Use=dat.n$PTPUBTRN)
 ggdat<-na.omit(ggdat)
 ggdat$Use<-factor(ggdat$Use, levels = c(1,0), labels = c("Yes","No"))
