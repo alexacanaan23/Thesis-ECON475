@@ -161,7 +161,6 @@ dat.nt.omit<-na.omit(dat.nt)
 dat.n.omit<-na.omit(dat.n)
 
 #SUMMARY STATISTICS FOR POPULATION
-#install.packages("skimr")
 library(skimr)
 library(dplyr)
 sum_stats_y<-filter(dat.n, PTPUBTRN==1)
@@ -189,7 +188,6 @@ summary(mod3)
 
 #BASE model
 #logit 
-#dat.logit<-data.frame(dat.n$PTPUBTRN, dat.n$METRO3, dat.n$CARS, dat.n$TRUCKS, dat.n$ZINC2, dat.n$PTDISBUS, dat.n$PTDISPUB, dat.n$PTDISRAIL, dat.n$PTDISSHUT, dat.n$PTDISSUB, dat.n$WNAMEN, dat.n$WNJOB, dat.n$WNTRAN)
 dat.n$PTPUBTRN<-factor(dat.n$PTPUBTRN, labels = c(1, 0))
 mod2<-glm(formula= PTPUBTRN ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISPUB + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.n, family = "binomial"(link = "logit"))
 summary(mod2)
@@ -200,7 +198,6 @@ mod4<-glm(formula= PTPUBTRN ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISP
 summary(mod4)
 
 #produce regression output
-#install.packages("stargazer")
 library(stargazer)
 stargazer(mod1, mod3, mod2, mod4, type = "text",
           dep.var.labels = c("Public Transport Use", "Public Transport Use"),
@@ -211,7 +208,7 @@ stargazer(mod1, mod3, mod2, mod4, type = "html",
 
 #visuals
 #household uses public transportation
-library(ggpplot2)
+library(ggplot2)
 ggdat<-data.frame(Use=dat.n$PTPUBTRN)
 ggdat<-na.omit(ggdat)
 ggdat$Use<-factor(ggdat$Use, levels = c(1,0), labels = c("Yes","No"))
@@ -227,7 +224,7 @@ ggplot(data=ggdat,aes(x=Use, fill=Use))+
 #MSA - metropolitan statistical area
 ggdat<-data.frame(Metro=dat.n$METRO3)
 ggdat<-na.omit(ggdat)
-ggdat$Metro<-factor(ggdat$Metro, levels = c(1,2,3,4,5), labels = c("Central City", "In MSA - Urban", "In MSA - Rural", "Outside MSA - Urban", "Outside MSA - Rural"))
+ggdat$Metro<-factor(ggdat$Metro, levels = c(1,2,3), labels = c("Central City", "In MSA - Urban", "In MSA - Rural", "Outside MSA - Urban", "Outside MSA - Rural"))
 ggplot(data=ggdat,aes(x=Metro, fill=Metro))+
   geom_bar()+
   theme_bw()+
@@ -375,6 +372,9 @@ library(caret)
 
 #remove NAs
 dat.n2<- na.omit(dat.n.omit)
+dat.n2<-subset(dat.n2, dat.n2$PTPUBTRN==1 | dat.n2$PTPUBTRN==0)
+dat.n2<-subset(dat.n2, dat.n2$PTDISPUB==1 | dat.n2$PTDISPUB==2 |dat.n2$PTDISPUB==3 |dat.n2$PTDISPUB==4)
+dat.n2<-subset(dat.n2, dat.n2$WNTRAN==1 | dat.n2$WNTRAN==0)
 
 #remove variables that have less than 2 factors
 for (i in names(dat.n2)) {
@@ -382,9 +382,7 @@ for (i in names(dat.n2)) {
     dat.n2[[i]]<-NULL
   }
 }
-
-#dat.n2<-na.omit(dat.n2)
-
+dat.n<-dat.n2
 grid = 10^seq(10, -2, length = 100)
 
 #split the data into training and test set
@@ -424,7 +422,6 @@ mean(predicted.classes == observed.classes)
 library(tidyverse)
 library(broom)
 library(glmnet)
-#install.packages("ridge")
 library(ridge)
 library(car)
 #predict with just linear regression
@@ -450,6 +447,5 @@ mean(apply(compare,1,min)/apply(compare,1,max))
 
 
 #RANDOM FOREST
-#install.packages("randomForest")
 library(randomForest)
 rf <- randomForest(PTPUBTRN ~., data=train.data)
