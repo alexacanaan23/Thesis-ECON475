@@ -160,6 +160,20 @@ dat.n$HHGRAD[dat.n$HHGRAD == -6] <- NA
 dat.nt.omit<-na.omit(dat.nt)
 dat.n.omit<-na.omit(dat.n)
 
+#remove NAs
+dat.n2<- na.omit(dat.n.omit)
+dat.n2<-subset(dat.n2, dat.n2$PTPUBTRN==1 | dat.n2$PTPUBTRN==0)
+dat.n2<-subset(dat.n2, dat.n2$PTDISPUB==1 | dat.n2$PTDISPUB==2 |dat.n2$PTDISPUB==3 |dat.n2$PTDISPUB==4)
+dat.n2<-subset(dat.n2, dat.n2$WNTRAN==1 | dat.n2$WNTRAN==0)
+
+#remove variables that have less than 2 factors
+for (i in names(dat.n2)) {
+  if (nlevels(dat.n2[[i]]) < 2 & is.factor(dat.n2[[i]])==TRUE) {
+    dat.n2[[i]]<-NULL
+  }
+}
+dat.n<-dat.n2
+
 #SUMMARY STATISTICS FOR POPULATION
 library(skimr)
 library(dplyr)
@@ -370,19 +384,6 @@ library(glmnet)
 library(tidyverse)
 library(caret)
 
-#remove NAs
-dat.n2<- na.omit(dat.n.omit)
-dat.n2<-subset(dat.n2, dat.n2$PTPUBTRN==1 | dat.n2$PTPUBTRN==0)
-dat.n2<-subset(dat.n2, dat.n2$PTDISPUB==1 | dat.n2$PTDISPUB==2 |dat.n2$PTDISPUB==3 |dat.n2$PTDISPUB==4)
-dat.n2<-subset(dat.n2, dat.n2$WNTRAN==1 | dat.n2$WNTRAN==0)
-
-#remove variables that have less than 2 factors
-for (i in names(dat.n2)) {
-  if (nlevels(dat.n2[[i]]) < 2 & is.factor(dat.n2[[i]])==TRUE) {
-    dat.n2[[i]]<-NULL
-  }
-}
-dat.n<-dat.n2
 grid = 10^seq(10, -2, length = 100)
 
 #split the data into training and test set
