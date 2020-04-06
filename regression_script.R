@@ -383,40 +383,47 @@ ggplot(data=ggdat,aes(x=Transport, fill=Transport))+
 library(glmnet)
 library(tidyverse)
 library(caret)
-
-grid = 10^seq(10, -2, length = 100)
+library(Matrix)
+library(foreach)
 
 #split the data into training and test set
-set.seed(69)
+set.seed(13)
 training.sample <- dat.n2$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
 train.data <- dat.n2[training.sample, ]
-#train.data <- na.omit(train.data)
 test.data <-dat.n2[-training.sample, ]
-#test.data <- na.omit(test.data)
 
 #dummy code categorical predictor variables
-x <- model.matrix(PTPUBTRN~., train.data)[,-1]
-y <- ifelse(train.data$PTPUBTRN == "pos", 1, 0)
-
-glmnet(x, y, family = "binomial", alpha = 1, lambda = NULL)
-
+x <- model.matrix(as.numeric(PTPUBTRN)~.- CONTROL, train.data)[,-1]
+y <- as.numeric(train.data$PTPUBTRN)
 # Find the best lambda using cross-validation
-set.seed(123) 
 cv.lasso <- cv.glmnet(x, y, alpha = 1, family = "binomial")
 plot(cv.lasso)
-# Fit the final model on the training data
-model <- glmnet(x, y, alpha = 1, family = "binomial",
-                lambda = cv.lasso$lambda.min)
-# Display regression coefficients
+#fit the model on the training data
+model<- glmnet(x, y, family = "binomial", alpha = 1, 
+               lambda = cv.lasso$lambda.min, maxit = 1000000)
+#display regression coefficients
 coef(model)
+model.coefs<-coef(model)
+
 # Make predictions on the test data
-x.test <- model.matrix(diabetes ~., test.data)[,-1]
+x.test <- model.matrix(PTPUBTRN ~. -CONTROL, test.data)[,-1]
 probabilities <- model %>% predict(newx = x.test)
 predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
 # Model accuracy
-observed.classes <- test.data$diabetes
+observed.classes <- test.data$PTPUBTRN
 mean(predicted.classes == observed.classes)
+
+# grab reduced variables
+vars_kept <- names(model.coefs[,1][which(model.coefs[,1] > 0)])
+
+### refit to get p-values
+train <- dplyr::select(train.data, CONTROL, label, vars_kept)
+test <- dplyr::select(test.data, CONTROL, label, vars_kept)
+
+# fit model
+mod3 <- glm(label ~ ., data = train[,-1], family="binomial")
+summary(mod3)
 
 #RIDGE REGRESSION
 
@@ -428,7 +435,6 @@ library(car)
 #predict with just linear regression
 lmMod<- lm(PTPUBTRN~., data = train.data)
 summary(lmMod)
-vif(lmMod)
 
 #predict on test data
 predictedlm<- predict(lmMod, test.data)
@@ -449,4 +455,4 @@ mean(apply(compare,1,min)/apply(compare,1,max))
 
 #RANDOM FOREST
 library(randomForest)
-rf <- randomForest(PTPUBTRN ~., data=train.data)
+rf <- randomForest(as.numeric(PTPUBTRN) ~. - CONTROL, data=train.data)
