@@ -400,8 +400,8 @@ y <- as.numeric(train.data$PTPUBTRN)
 cv.lasso <- cv.glmnet(x, y, alpha = 1, family = "binomial")
 plot(cv.lasso)
 #fit the model on the training data
-model<- glmnet(x, y, family = "binomial", alpha = 1, 
-               lambda = cv.lasso$lambda.min, maxit = 1000000)
+model<- cv.glmnet(x, y, family = "binomial", alpha = 1) 
+               #lambda = cv.lasso$lambda.min, maxit = 1000000)
 #display regression coefficients
 coef(model)
 model.coefs<-coef(model)
@@ -418,11 +418,11 @@ mean(predicted.classes == observed.classes)
 vars_kept <- names(model.coefs[,1][which(model.coefs[,1] > 0)])
 
 ### refit to get p-values
-train <- dplyr::select(train.data, CONTROL, label, vars_kept)
-test <- dplyr::select(test.data, CONTROL, label, vars_kept)
+train <- dplyr::select(train.data, CONTROL, PTPUBTRN, vars_kept)
+test <- dplyr::select(test.data, CONTROL, PTPUBTRN, vars_kept)
 
 # fit model
-mod3 <- glm(label ~ ., data = train[,-1], family="binomial")
+mod3 <- glmnet(as.numeric(PTPUBTRN) ~ ., data = train.data[,-1], family="binomial")
 summary(mod3)
 
 #RIDGE REGRESSION
