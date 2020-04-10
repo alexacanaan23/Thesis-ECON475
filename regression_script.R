@@ -433,7 +433,7 @@ library(glmnet)
 library(ridge)
 library(car)
 #predict with just linear regression
-lmMod<- lm(PTPUBTRN~., data = train.data)
+lmMod<- lm(PTPUBTRN~. -CONTROL, data = train.data)
 summary(lmMod)
 
 #predict on test data
@@ -444,7 +444,7 @@ compare <- cbind(actual=test.data$PTPUBTRN, predictedlm)
 mean(apply(compare,1,min)/apply(compare,1,max))
 
 #ridge regression model
-linRidgeMod <- linearRidge(PTPUBTRN ~ ., data = test.data)
+linRidgeMod <- linearRidge(PTPUBTRN ~ . -CONTROL, data = test.data)
 #predict on test data
 predictedRidgeMod <- predict(linRidgeMod, test.data)
 #compare
