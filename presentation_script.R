@@ -217,6 +217,7 @@ stargazer(mod1, mod3, mod2, mod4, type = "html",
 #CLASSIFICATION TREE
 #split the data into training and test set
 reg.dat<-data.frame(sum_stats_gen_pt,CONTROL=dat.t$CONTROL, PTPUBTRN=dat.t$PTPUBTRN)
+set.seed(4)
 training.sample <- reg.dat$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
 train.data <- reg.dat[training.sample, ]
@@ -232,15 +233,12 @@ plot(tree.ptpubtrn)
 text(tree.ptpubtrn, pretty=0)
 tree.ptpubtrn
 
-
-set.seed(13)
 tree.ptpubtrn.train=tree(PTPUBTRN~.-CONTROL,data = train.data)
 tree.ptpubtrn.pred=predict(tree.ptpubtrn.train,test.data,type="class")
 table(tree.ptpubtrn.pred, y.test)
 (1309+4551)/(1309+4551+55)
 #correct predictions for around 99.1% of locations in test data
 
-set.seed(24)
 cv.ptpubtrn=cv.tree(tree.ptpubtrn.train,FUN=prune.misclass)
 names(cv.ptpubtrn)
 cv.ptpubtrn
@@ -257,7 +255,7 @@ text(prune.ptpubtrn, pretty=0)
 
 #test pruned tree performance
 tree.ptpubtrn.test=predict(prune.ptpubtrn, test.data, type = "class")
-table(tree.ptpubtrn.test, y.test)
+o<-table(tree.ptpubtrn.test, y.test)
 
 # N=29580 #############################################################################
 dat.t1<-subset(dat.t, dat.t$PTPUBTRN==1 | dat.t$PTPUBTRN==0)
@@ -272,7 +270,7 @@ skim(sum_stats_y_pop)
 skim(sum_stats_gen_pop)
 #SUMMARY STATISTICS FOR PUBLIC TRANSPORTATION
 sum_stats_y_pt<-data.frame(Metro=sum_stats_y$METRO3, Cars=sum_stats_y$CARS, Trucks=sum_stats_y$TRUCKS, Bus=sum_stats_y$PTDISBUS, Public_Transportation=sum_stats_y$PTDISPUB, Rail=sum_stats_y$PTDISRAIL, Shuttle=sum_stats_y$PTDISSHUT, Subway=sum_stats_y$PTDISSUB, Move_Public_Transport=sum_stats_y$WNTRAN, Move_Amenities=sum_stats_y$WNAMEN, Move_Job=sum_stats_y$WNJOB)
-sum_stats_gen_pt<-data.frame(Metro=dat.t1$METRO3, Cars=dat.t1$CARS, Trucks=dat.t1$TRUCKS, Bus=dat.t1$PTDISBUS, Public_Transportation=dat.t1$PTDISPUB, Rail=dat.t1$PTDISRAIL, Shuttle=dat.t1$PTDISSHUT, Subway=dat.t1$PTDISSUB, Move_Public_Transport=dat.t1$WNTRAN, Move_Amenities=dat.t1$WNAMEN, Move_Job=dat.t1$WNJOB)
+sum_stats_gen_pt<-data.frame(Metro=dat.t1$METRO3, Cars=dat.t1$CARS, Trucks=dat.t1$TRUCKS, Public_Transport=dat.t1$PTDISPUB, Bus=dat.t1$PTDISBUS, Rail=dat.t1$PTDISRAIL, Shuttle=dat.t1$PTDISSHUT, Subway=dat.t1$PTDISSUB, Move_Public_Transport=dat.t1$WNTRAN, Move_Amenities=dat.t1$WNAMEN, Move_Job=dat.t1$WNJOB)
 skim(sum_stats_y_pt)
 skim(sum_stats_gen_pt)
 
@@ -327,14 +325,12 @@ plot(tree.ptpubtrn)
 text(tree.ptpubtrn, pretty=0)
 tree.ptpubtrn
 
-set.seed(13)
 tree.ptpubtrn.train=tree(PTPUBTRN~.-CONTROL,data = train.data)
 tree.ptpubtrn.pred=predict(tree.ptpubtrn.train,test.data,type="class")
 table(tree.ptpubtrn.pred, y.test)
-(1310+4551)/(1310+4551+54)
+(1325+4551)/(1310+4551+54)
 #correct predictions for around 99.1% of locations in test data
 
-set.seed(24)
 cv.ptpubtrn=cv.tree(tree.ptpubtrn.train,FUN=prune.misclass)
 names(cv.ptpubtrn)
 cv.ptpubtrn
@@ -346,9 +342,180 @@ plot(cv.ptpubtrn$k, cv.ptpubtrn$dev, type="b")
 
 #apply prune.misclass to prune tree to lowest error rate
 prune.ptpubtrn = prune.misclass(tree.ptpubtrn.train, best=6)
+par(mfrow=c(1,1))
 plot(prune.ptpubtrn)
 text(prune.ptpubtrn, pretty=0)
+title(main = "Pruned Classification Tree")
 
 #test pruned tree performance
 tree.ptpubtrn.test=predict(prune.ptpubtrn, test.data, type = "class")
 table(tree.ptpubtrn.test, y.test)
+(1313+4551)/(1310+4551+54)
+# FIGURES ###############################################################
+library(ggplot2)
+Use<-prop.table(table(reg.dat$PTPUBTRN))
+ggdat<-data.frame(Use)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Use", "Frequency")
+ggdat$Use<-factor(ggdat$Use, levels = c(1,0), labels = c("Yes","No"))
+ggplot(data=ggdat,aes(x=Use, y=Frequency, fill=Use))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Indicator of Public Transportation Use")+
+  ylab("Count")+
+  ggtitle("National Indicator of Public Transportation Use")
+
+reg.dat.1<-subset(reg.dat, PTPUBTRN==1)
+
+#metro
+#MSA - metropolitan statistical area
+metro<-prop.table(table(reg.dat$Metro))
+metro<-as.data.frame(metro)
+metro<-prop.table(table(reg.dat.1$Metro))
+ggdat<-data.frame(Metro=metro)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Metro", "Frequency")
+ggdat$Metro<-factor(ggdat$Metro, levels = c(1,2,3), labels = c("Central City", "Greater Metropolitan Area", "Rural"))
+ggplot(data=ggdat,aes(x=Metro, y=Frequency, fill=Metro))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("")+
+  ylab("Frequency")+
+  ggtitle("Population Density Overall")
+
+#cars
+Cars<-prop.table(table(reg.dat$Cars))
+Cars<-prop.table(table(reg.dat.1$Cars))
+ggdat<-data.frame(Cars)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Cars", "Frequency")
+ggdat$Cars<-factor(ggdat$Cars, levels = c(0,1,2,3,4,5), labels = c(0,1,2,3,4,"5+"))
+ggplot(data=ggdat,aes(x=Cars, y= Frequency, fill=Cars))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Number of Cars")+
+  ylab("Frequency")+
+  ggtitle("Number of Cars per Household Overall")
+
+#trucks
+Trucks<-prop.table(table(reg.dat$Trucks))
+Trucks<-prop.table(table(reg.dat.1$Trucks))
+ggdat<-data.frame(Trucks)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Trucks", "Frequency")
+ggdat$Trucks<-factor(ggdat$Trucks, levels = c(0,1,2,3,4,5), labels = c(0,1,2,3,4,"5+"))
+ggplot(data=ggdat,aes(x=Trucks, y=Frequency, fill=Trucks))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Number of Trucks")+
+  ylab("Frequency")+
+  ggtitle("Number of Trucks per Household for Riders")
+
+#PT
+Distance<-prop.table(table(reg.dat$Public_Transportation))
+Distance<-prop.table(table(reg.dat.1$Public_Transportation))
+ggdat<-data.frame(Distance)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Distance", "Frequency")
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggdat<-na.omit(ggdat)
+ggplot(data=ggdat,aes(x=Distance, y= Frequency, fill=Distance))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Public Transportation")+
+  ylab("Frequency")+
+  ggtitle("General Distance from Public Transportation for Riders")
+
+#rail distance 
+ggdat<-data.frame(Distance=reg.dat$Rail)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Rail Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Rail Stop")
+
+#shuttle distance 
+ggdat<-data.frame(Distance=reg.dat$Shuttle)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Shuttle Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Shuttle Stop")
+
+#subway distance 
+ggdat<-data.frame(Distance=reg.dat$Subway)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Subway Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Subway Stop")
+
+ggdat<-data.frame(Distance=reg.dat$Bus)
+ggdat<-na.omit(ggdat)
+ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
+ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
+  geom_bar()+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Distance from Bus Stop")+
+  ylab("Count")+
+  ggtitle("Distance from Bus Stop")
+
+#wnamen
+Amenities<-prop.table(table(reg.dat.1$Move_Amenities))
+ggdat<-data.frame(Amenities)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Amenities", "Frequency")
+ggdat$Amenities<-factor(ggdat$Amenities, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Amenities, y=Frequency, fill=Amenities))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Amenities")+
+  ylab("Frequency")+
+  ggtitle("Moved to be Closer to Amenities for Riders")
+
+#wnjob
+Work<-prop.table(table(reg.dat.1$Move_Job))
+ggdat<-data.frame(Work)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Work", "Frequency")
+ggdat$Work<-factor(ggdat$Work, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Work, y=Frequency, fill=Work))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Work")+
+  ylab("Frequency")+
+  ggtitle("Moved to be Closer to Work for Riders")
+
+#wntrain
+Transport<-prop.table(table(reg.dat.1$Move_Public_Transport))
+ggdat<-data.frame(Transport)
+ggdat<-na.omit(ggdat)
+names(ggdat)<-c("Transport", "Frequency")
+ggdat$Transport<-factor(ggdat$Transport, levels = c(1,0), labels = c("Yes", "No"))
+ggplot(data=ggdat,aes(x=Transport, y=Frequency, fill=Transport))+
+  geom_bar(stat="identity")+
+  theme_bw()+
+  geom_hline(yintercept=0)+
+  xlab("Moved to be Closer to Transportation")+
+  ylab("Frequency")+
+  ggtitle("Moved to be Closer to Transportation for Riders")

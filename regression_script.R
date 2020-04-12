@@ -284,7 +284,7 @@ ggplot(data=ggdat,aes(x=Income))+
   theme(legend.title = element_blank())
 
 #general distance
-ggdat<-data.frame(Distance=dat.n$PTDISPUB)
+ggdat<-data.frame(Distance=reg.dat$Public_Transportation)
 ggdat<-na.omit(ggdat)
 ggdat$Distance<-factor(ggdat$Distance, levels = c(1,2,3,4), labels = c("< 1/4 Mile", "1/4 - 1/2 Mile", "1/2 - 1 Mile", "1+ Miles"))
 ggplot(data=ggdat,aes(x=Distance, fill=Distance))+
