@@ -1,0 +1,2 @@
+# Thesis-ECON475
+For my thesis at Colgate University, I explored machine learning techniques in my Econometrics Seminar with the goal of predicting public transportation ridership using household and neighborhood characteristics. I incorporated OLS, logit, and LASSO regressions as well as classification trees and assessed their relative accuracies. I also explored data visualization with a specific focus on visualizaing classification trees.
