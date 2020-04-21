@@ -262,6 +262,72 @@ library(tree)
 library(caret)
 library(dplyr)
 ###########BASE model ############
+mod<-lm(formula= as.numeric(PTPUBTRN) ~ PTDISPUB + PTDISBUS + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.t1)
+summary(mod)
+
+#classification tree
+mod<-data.frame(PTPUBTRN = dat.t1$PTPUBTRN, Bus = dat.t1$PTDISBUS, Rail = dat.t1$PTDISRAIL, Shuttle = dat.t1$PTDISSHUT, Subway= dat.t1$PTDISSUB)
+#split the data into training and test set
+training.sample <- mod$PTPUBTRN %>%
+  createDataPartition(p = 0.8, list=FALSE)
+train.data <- mod[training.sample, ]
+test.data <- mod[-training.sample, ]
+test.data <-data.frame(test.data)
+y.test <-test.data$PTPUBTRN
+
+#fit a classification tree
+tree.ptpubtrn=tree(PTPUBTRN~., data = mod)
+summary(tree.ptpubtrn)
+par(mfrow=c(1,1))
+plot(tree.ptpubtrn)
+text(tree.ptpubtrn, pretty=0)
+tree.ptpubtrn
+
+tree.ptpubtrn.train=tree(PTPUBTRN~.,data = train.data)
+tree.ptpubtrn.pred=predict(tree.ptpubtrn.train,test.data,type="class")
+accuracy_Table_1<-table(tree.ptpubtrn.pred, y.test)
+#correct predictions for around 99.1% of locations in test data
+
+cv.ptpubtrn=cv.tree(tree.ptpubtrn.train,FUN=prune.misclass)
+names(cv.ptpubtrn)
+cv.ptpubtrn
+#dev is the cross-validation error rate 
+#plot error rate as a fn of size and k folds
+par(mfrow=c(1,2))
+plot(cv.ptpubtrn$size, cv.ptpubtrn$dev, type="b")
+plot(cv.ptpubtrn$k, cv.ptpubtrn$dev, type="b")
+
+#apply prune.misclass to prune tree to lowest error rate
+prune.ptpubtrn = prune.misclass(tree.ptpubtrn.train, best=5)
+par(mfrow=c(1,1))
+plot(prune.ptpubtrn)
+text(prune.ptpubtrn, pretty=0)
+title(main = "Pruned Classification Tree")
+
+#test pruned tree performance
+tree.ptpubtrn.test=predict(prune.ptpubtrn, test.data, type = "class")
+accuracy_Table_2<-table(tree.ptpubtrn.test, y.test)
+
+for (i in 1:1000){
+  training.sample <- mod$PTPUBTRN %>%
+    createDataPartition(p = 0.8, list=FALSE)
+  train.data <- mod[training.sample, ]
+  test.data <-mod[-training.sample, ]
+  test.data <-data.frame(test.data)
+  y.test <-test.data$PTPUBTRN
+  
+  tree.ptpubtrn.train=tree(PTPUBTRN~.,data = train.data)
+  tree.ptpubtrn.pred=predict(tree.ptpubtrn.train,test.data,type="class")
+  accuracy_Table_1 = accuracy_Table_1 + table(tree.ptpubtrn.pred, y.test)
+  
+  cv.ptpubtrn=cv.tree(tree.ptpubtrn.train,FUN=prune.misclass)
+  prune.ptpubtrn = prune.misclass(tree.ptpubtrn.train, best=max(cv.ptpubtrn$size))
+  
+  tree.ptpubtrn.test=predict(prune.ptpubtrn, test.data, type = "class")
+  accuracy_Table_2 = accuracy_Table_2 + table(tree.ptpubtrn.test, y.test)
+}
+
+#######
 #ols
 mod1<-lm(formula= as.numeric(PTPUBTRN) ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISPUB + PTDISBUS + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.t1)
 summary(mod1)
@@ -662,15 +728,12 @@ for (i in 1:1000){
 ###############Produce Output##################
 #produce regression output
 library(stargazer)
-stargazer(mod1, mod2, mod3, mod4, mod5, mod6, type = "text",
+stargazer(mod, mod1, type = "text",
+          dep.var.labels = c("Public Transport Use", "Public Transport Use"),
+          out = "regmodels.txt")
+stargazer(mod, mod3, mod5, mod51, type = "text",
           dep.var.labels = c("Public Transport Use", "Public Transport Use"),
           out = "regmodels1.txt")
-stargazer(mod1, mod2, mod3, mod4, mod5, mod6, type = "html",
-          dep.var.labels = c("Public Transport Use", "Public Transport Use"),
-          out = "regmodels1.htm")
-stargazer(mod1, mod2, mod3, mod31, type = "text",
-          dep.var.labels = c("Public Transport Use"),
-          out = "regmodelsFINAL.txt")
 
 #CLASSIFICATION TREE
 library(tree)
