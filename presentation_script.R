@@ -431,6 +431,8 @@ ggplot(data=ggdat,aes(x=Distance, y= Frequency, fill=Distance))+
   ylab("Frequency")+
   ggtitle("General Distance from Public Transportation for Riders")
 
+reg.dat.1.mode<-subset(reg.dat.1, Public_Transport==4)
+
 #rail distance 
 ggdat<-data.frame(Distance=reg.dat$Rail)
 ggdat<-na.omit(ggdat)
