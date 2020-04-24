@@ -244,6 +244,7 @@ for (i in names(dat.n2)) {
 
 dat.t<-dat.n2
 dat.t1<-subset(dat.t, dat.t$PTPUBTRN==1 | dat.t$PTPUBTRN==0)
+na.omit(dat.t1)
 
 #SUMMARY STATISTICS FOR PUBLIC TRANSPORTATION
 library(skimr)
@@ -262,6 +263,10 @@ skim(all_vars)
 library(tree)
 library(caret)
 library(dplyr)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
 ###########BASE model ############
 mod<-lm(formula= as.numeric(PTPUBTRN) ~ PTDISBUS + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.t1)
 mod.l<-glm(formula= PTPUBTRN ~ PTDISBUS + PTDISRAIL + PTDISSHUT + PTDISSUB, data = dat.t1, family = "binomial"(link = "logit"))
@@ -269,6 +274,12 @@ summary(mod)
 
 #classification tree
 mod<-data.frame(PTPUBTRN = dat.t1$PTPUBTRN, Bus = dat.t1$PTDISBUS, Rail = dat.t1$PTDISRAIL, Shuttle = dat.t1$PTDISSHUT, Subway= dat.t1$PTDISSUB)
+na.omit(mod)
+
+fit<-rpart(PTPUBTRN~., data = mod, method="class")
+plot(fit)
+text(fit)
+fancyRpartPlot(fit)
 #split the data into training and test set
 training.sample <- mod$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
@@ -599,7 +610,6 @@ mod5<-lm(formula= as.numeric(PTPUBTRN) ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISB
 mod5.l<-glm(formula= PTPUBTRN ~ METRO3 + CARS + TRUCKS + ZINC2 + PTDISBUS + PTDISRAIL + PTDISSHUT + PTDISSUB  + WNAMEN + WNJOB + WNTRAN + PTBANK + PTENTMNT + PTGROCER + PTHEALTH + PTRETAIL + PTSERVIC + PTGETBUS + PTGETRAIL + PTGETSHUT + PTGETSUB + PTOFTSUB + PTOFTSHUT + PTOFTRAIL + PTOFTBUS + PTWKSCHL, data = dat.t1, family = "binomial"(link = "logit"))
 summary(mod5)
 all_mod<-data.frame(PTPUBTRN = dat.t1$PTPUBTRN, Metro = dat.t1$METRO3, Cars = dat.t1$CARS, Trucks = dat.t1$TRUCKS, Income = dat.t1$ZINC2, Bus = dat.t1$PTDISBUS, Rail = dat.t1$PTDISRAIL, Shuttle = dat.t1$PTDISSHUT, Subway = dat.t1$PTDISSUB, Move_Amenities = dat.t1$WNAMEN, Move_Job = dat.t1$WNJOB, Move_Public_Transport = dat.t1$WNTRAN, Bank = dat.t1$PTBANK, Entertainment = dat.t1$PTENTMNT, Grocery = dat.t1$PTGROCER, Health = dat.t1$PTHEALTH, Retail = dat.t1$PTRETAIL, Service = dat.t1$PTSERVIC, GetBus = dat.t1$PTGETBUS, GetRail = dat.t1$PTGETRAIL, GetShuttle = dat.t1$PTGETSHUT, GetSubway = dat.t1$PTGETSUB, Freq_Sub = dat.t1$PTOFTSUB, Freq_Shut = dat.t1$PTOFTSHUT, Freq_Rail = dat.t1$PTOFTRAIL, Freq_Bus=dat.t1$PTOFTBUS, Freq_Work_School=dat.t1$PTWKSCHL)
-
 #split the data into training and test set
 training.sample <- all_mod$PTPUBTRN %>%
   createDataPartition(p = 0.8, list=FALSE)
@@ -607,6 +617,7 @@ train.data <- all_mod[training.sample, ]
 test.data <-all_mod[-training.sample, ]
 test.data <-data.frame(test.data)
 y.test <-test.data$PTPUBTRN
+na.omit(y.test)
 
 #fit a classification tree
 tree.ptpubtrn=tree(PTPUBTRN~., data = all_mod)
@@ -661,6 +672,7 @@ for (i in 1:1000){
   accuracy_Table_2all = accuracy_Table_2all + table(tree.ptpubtrn.test, y.test)
 }
 
+View(accuracy_Table_2all)
 
 ################BASE + neighborhood + attitudes + access proxies + get vars + frequency#####################
 mod51<-lm(formula= as.numeric(PTPUBTRN) ~ METRO3 + CARS + TRUCKS + ZINC2 + WNAMEN + WNJOB + WNTRAN + PTBANK + PTENTMNT + PTGROCER + PTHEALTH + PTRETAIL + PTSERVIC, data = dat.t1)
